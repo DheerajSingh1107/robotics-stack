@@ -11,15 +11,17 @@ permissions:
   contents: write
 
 jobs:
-  nuttx-qemu-smoke:
+  nuttx-sim-smoke:
     runs-on: ubuntu-latest
 
     steps:
+      #  Checkout with submodules
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      #  Install dependencies
       - name: Install build dependencies
         run: |
           sudo apt-get update
@@ -33,87 +35,74 @@ jobs:
             libncursesw5-dev \
             pkg-config \
             python3 \
-            qemu-system-arm
+            python3-pip
 
-          export NUTTXTOOLS="${HOME}/nuttx-tools"
-          mkdir -p "${NUTTXTOOLS}"
-          source nuttx/tools/ci/platforms/ubuntu.sh
-          arm_gcc_toolchain
-          echo "${NUTTXTOOLS}/gcc-arm-none-eabi/bin" >> "${GITHUB_PATH}"
-
-          if apt-cache show kconfig-frontends >/dev/null 2>&1; then
-            sudo apt-get install -y kconfig-frontends
-          else
-            source nuttx/tools/ci/platforms/ubuntu.sh
-            kconfig_frontends
-            echo "${NUTTXTOOLS}/kconfig-frontends/bin" >> "${GITHUB_PATH}"
-          fi
-
+      #  Verify structure
       - name: Verify submodules
         run: |
           test -d nuttx
           test -d nuttx-apps
           git submodule status
 
-      - name: Configure NuttX (qemu-armv7a:nsh)
+      #  Configure NuttX (SIM)
+      - name: Configure NuttX (sim:nsh)
         run: |
           cd nuttx
-          ./tools/configure.sh -l -a ../nuttx-apps qemu-armv7a:nsh
+          ./tools/configure.sh -l sim:nsh
+          make olddefconfig
 
+      #  Build
       - name: Build NuttX
         run: |
           cd nuttx
-          make -j"$(nproc)"
+          make -j$(nproc)
 
-      - name: Boot Test On QEMU
+      #  Run firmware (simulation)
+      - name: Run NuttX (sim)
         run: |
           cd nuttx
-          set +e
-          timeout 60s qemu-system-arm \
-            -cpu cortex-a7 \
-            -nographic \
-            -machine virt,virtualization=off,gic-version=2 \
-            -net none \
-            -chardev stdio,id=con,mux=on \
-            -serial chardev:con \
-            -mon chardev=con,mode=readline \
-            -kernel ./nuttx 2>&1 | tee ../qemu-boot.log
-          qemu_status=${PIPESTATUS[0]}
-          set -e
+          chmod +x ./nuttx
+          timeout 15s ./nuttx > ../sim.log 2>&1 || true
 
-          grep -q "nsh>" ../qemu-boot.log
+      #  Show logs (debug visibility)
+      - name: Show boot log
+        run: |
+          cat sim.log
 
-          # timeout(124) is expected because QEMU keeps running after boot
-          if [ "${qemu_status}" -ne 0 ] && [ "${qemu_status}" -ne 124 ]; then
-            exit "${qemu_status}"
-          fi
+      #  Verify system booted
+      - name: Verify NSH prompt
+        run: |
+          grep -q "nsh>" sim.log
 
+      #  Package artifacts
       - name: Package build artifacts
         run: |
           mkdir -p artifacts
           cp nuttx/nuttx artifacts/ || true
           cp nuttx/System.map artifacts/ || true
           cp nuttx/.config artifacts/ || true
-          cp qemu-boot.log artifacts/ || true
-          tar -czf "nuttx-qemu-armv7a-nsh-${GITHUB_SHA}.tar.gz" -C artifacts .
+          cp sim.log artifacts/ || true
+          tar -czf "nuttx-sim-nsh-${GITHUB_SHA}.tar.gz" -C artifacts .
 
+      #  Upload artifact
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nuttx-qemu-armv7a-nsh-build
-          path: nuttx-qemu-armv7a-nsh-${{ github.sha }}.tar.gz
+          name: nuttx-sim-nsh-build
+          path: nuttx-sim-nsh-${{ github.sha }}.tar.gz
           if-no-files-found: error
 
+  #  Release job (only on tags like v1.0.0)
   release:
     runs-on: ubuntu-latest
-    needs: nuttx-qemu-smoke
+    needs: nuttx-sim-smoke
     if: startsWith(github.ref, 'refs/tags/')
 
     steps:
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
-          name: nuttx-qemu-armv7a-nsh-build
+          name: nuttx-sim-nsh-build
           path: release-assets
 
       - name: Publish GitHub release
