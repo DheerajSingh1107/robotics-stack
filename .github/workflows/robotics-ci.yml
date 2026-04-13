@@ -19,6 +19,9 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Fix git safe directory
+        run: |
+          git config --global --add safe.directory $GITHUB_WORKSPACE
       - name: Verify submodules
         run: |
           test -d nuttx
