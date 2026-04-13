@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: ghcr.io/dheerajsingh1107/nuttx-ci:latest:v1
+      image: ghcr.io/dheerajsingh1107/nuttx-ci:v1
 
     steps:
       - name: Checkout repository
