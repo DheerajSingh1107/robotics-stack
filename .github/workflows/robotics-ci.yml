@@ -1,119 +1,43 @@
-name: Robotics CI/CD
-
-on:
-  push:
-    branches: ["**"]
-    tags: ["v*"]
-  pull_request:
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
 jobs:
   nuttx-sim-smoke:
     runs-on: ubuntu-latest
 
+    container:
+      image: ghcr.io/dheerajsingh1107/nuttx-ci:latest
+
     steps:
-      #  Checkout with submodules
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      #  Install dependencies
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            bison \
-            build-essential \
-            flex \
-            genromfs \
-            gperf \
-            libncurses5-dev \
-            libncursesw5-dev \
-            pkg-config \
-            python3
-          if apt-cache show kconfig-frontends >/dev/null 2>&1; then
-            sudo apt-get install -y kconfig-frontends
-          else
-            export NUTTXTOOLS="${HOME}/nuttx-tools"
-            mkdir -p "${NUTTXTOOLS}"
-            source nuttx/tools/ci/platforms/ubuntu.sh
-            kconfig_frontends
-            echo "${NUTTXTOOLS}/kconfig-frontends/bin" >> "${GITHUB_PATH}"
-          fi
-
-      #  Verify structure
       - name: Verify submodules
         run: |
           test -d nuttx
           test -d nuttx-apps
           git submodule status
 
-      #  Configure NuttX (SIM)
-      - name: Configure NuttX (sim:nsh)
+      - name: Configure NuttX
         run: |
           cd nuttx
           ./tools/configure.sh -l sim:nsh
           make olddefconfig
 
-      #  Build
-      - name: Build NuttX
+      - name: Build
         run: |
           cd nuttx
           make -j$(nproc)
 
-      #  Run firmware (simulation)
-      - name: Run NuttX (sim)
+      - name: Run simulation
         run: |
           cd nuttx
           chmod +x ./nuttx
           timeout 15s ./nuttx > ../sim.log 2>&1 || true
 
-      #  Show logs (debug visibility)
       - name: Show boot log
         run: |
           cat sim.log
 
-      #  Verify system booted
       - name: Verify NSH prompt
         run: |
           grep -q "nsh>" sim.log
-
-      #  Package artifacts
-      - name: Package build artifacts
-        run: |
-          mkdir -p artifacts
-          cp nuttx/nuttx artifacts/ || true
-          cp nuttx/System.map artifacts/ || true
-          cp nuttx/.config artifacts/ || true
-          cp sim.log artifacts/ || true
-          tar -czf "nuttx-sim-nsh-${GITHUB_SHA}.tar.gz" -C artifacts .
-
-      #  Upload artifact
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: nuttx-sim-nsh-build
-          path: nuttx-sim-nsh-${{ github.sha }}.tar.gz
-          if-no-files-found: error
-
-  #  Release job (only on tags like v1.0.0)
-  release:
-    runs-on: ubuntu-latest
-    needs: nuttx-sim-smoke
-    if: startsWith(github.ref, 'refs/tags/')
-
-    steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: nuttx-sim-nsh-build
-          path: release-assets
-
-      - name: Publish GitHub release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: release-assets/*.tar.gz
