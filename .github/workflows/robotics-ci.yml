@@ -27,12 +27,21 @@ jobs:
             bison \
             build-essential \
             flex \
+            genromfs \
             gperf \
-            kconfig-frontends \
             libncurses5-dev \
             libncursesw5-dev \
             pkg-config \
             python3
+          if apt-cache show kconfig-frontends >/dev/null 2>&1; then
+            sudo apt-get install -y kconfig-frontends
+          else
+            export NUTTXTOOLS="${HOME}/nuttx-tools"
+            mkdir -p "${NUTTXTOOLS}"
+            source nuttx/tools/ci/platforms/ubuntu.sh
+            kconfig_frontends
+            echo "${NUTTXTOOLS}/kconfig-frontends/bin" >> "${GITHUB_PATH}"
+          fi
 
       - name: Verify submodules
         run: |
@@ -43,7 +52,7 @@ jobs:
       - name: Configure NuttX (sim:nsh)
         run: |
           cd nuttx
-          ./tools/configure.sh sim:nsh
+          ./tools/configure.sh -a ../nuttx-apps sim:nsh
 
       - name: Build NuttX
         run: |

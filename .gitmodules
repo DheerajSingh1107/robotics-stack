@@ -4,3 +4,6 @@
 [submodule "nuttx"]
 	path = nuttx
 	url = https://github.com/apache/nuttx.git
+[submodule "tools"]
+	path = tools
+	url = https://bitbucket.org/nuttx/tools.git
