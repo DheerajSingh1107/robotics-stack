@@ -34,8 +34,16 @@ jobs:
             libncurses5-dev \
             libncursesw5-dev \
             pkg-config \
-            python3 \
-            python3-pip
+            python3
+          if apt-cache show kconfig-frontends >/dev/null 2>&1; then
+            sudo apt-get install -y kconfig-frontends
+          else
+            export NUTTXTOOLS="${HOME}/nuttx-tools"
+            mkdir -p "${NUTTXTOOLS}"
+            source nuttx/tools/ci/platforms/ubuntu.sh
+            kconfig_frontends
+            echo "${NUTTXTOOLS}/kconfig-frontends/bin" >> "${GITHUB_PATH}"
+          fi
 
       #  Verify structure
       - name: Verify submodules
