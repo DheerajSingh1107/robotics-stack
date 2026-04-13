@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  nuttx-sim-smoke:
+  nuttx-build-smoke:
     runs-on: ubuntu-latest
 
     container:
@@ -22,23 +22,11 @@ jobs:
       - name: Fix git safe directory
         run: |
           git config --global --add safe.directory $GITHUB_WORKSPACE
-      - name: Verify submodules
-        run: |
-          test -d nuttx
-          test -d nuttx-apps
-          git submodule status
 
-      - name: Configure NuttX
+      - name: Configure + Build
         run: |
           cd nuttx
-          ./tools/configure.sh -l sim:nsh
-          make olddefconfig
-
-      - name: Build
-        run: |
-          cd nuttx
-          make distclean
-          ./tools/configure.sh -l sim:nsh
+          ./tools/configure.sh -a ../nuttx-apps sim:nsh
           make olddefconfig
           make -j$(nproc)
 
@@ -48,10 +36,6 @@ jobs:
           chmod +x ./nuttx
           timeout 15s ./nuttx > ../sim.log 2>&1 || true
 
-      - name: Show boot log
-        run: |
-          cat sim.log
-
-      - name: Verify NSH prompt
+      - name: Verify NSH
         run: |
           grep -q "nsh>" sim.log
