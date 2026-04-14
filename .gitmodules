@@ -1,9 +1,11 @@
 [submodule "nuttx-apps"]
 	path = nuttx-apps
 	url = https://github.com/DheerajSingh1107/nuttx-apps.git
+	branch = dev10.2
 [submodule "nuttx"]
 	path = nuttx
 	url = https://github.com/DheerajSingh1107/nuttx.git
+	branch = dev10.2
 [submodule "tools"]
 	path = tools
 	url = https://bitbucket.org/nuttx/tools.git
