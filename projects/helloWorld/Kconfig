@@ -1,0 +1,20 @@
+config EXAMPLES_HELLOWORLD
+    tristate "HelloWorld example"
+    default n
+    ---help---
+        Enable the HelloWorld example application.
+
+config EXAMPLES_HELLOWORLD_PROGNAME
+    string "Program name"
+    depends on EXAMPLES_HELLOWORLD
+    default "helloworld"
+
+config EXAMPLES_HELLOWORLD_PRIORITY
+    int "Task priority"
+    depends on EXAMPLES_HELLOWORLD
+    default 100
+
+config EXAMPLES_HELLOWORLD_STACKSIZE
+    int "Stack size"
+    depends on EXAMPLES_HELLOWORLD
+    default DEFAULT_TASK_STACKSIZE
