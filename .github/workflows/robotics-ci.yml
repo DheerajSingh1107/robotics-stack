@@ -19,10 +19,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Move submodules to dev10.2
-        run: |
-          git submodule sync --recursive
-          git submodule update --init --remote nuttx nuttx-apps
 
       - name: Install build dependencies
         run: |
