@@ -1,0 +1,72 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_ENCODER
+	tristate "Encoder standalone app"
+	default n
+	depends on SPI_EXCHANGE && SPI_DRIVER
+	---help---
+		Enable a standalone SPI magnetic encoder application for
+		validating raw count, angle, and velocity readout.
+
+if EXAMPLES_ENCODER
+
+config EXAMPLES_ENCODER_PROGNAME
+	string "Program name"
+	default "encoder"
+
+config EXAMPLES_ENCODER_PRIORITY
+	int "Task priority"
+	default 100
+
+config EXAMPLES_ENCODER_STACKSIZE
+	int "Stack size"
+	default DEFAULT_TASK_STACKSIZE
+
+config EXAMPLES_ENCODER_DEFAULT_FREQ
+	int "Default encoder sample frequency (Hz)"
+	default 20000
+	range 100 200000
+
+config EXAMPLES_ENCODER_DEVPATH
+	string "Encoder SPI device path"
+	default "/dev/spi3"
+
+config EXAMPLES_ENCODER_WARMUP_SAMPLES
+	int "Encoder warmup samples"
+	default 20
+	range 1 200
+
+config EXAMPLES_ENCODER_PPAIRS
+	int "Encoder pole pairs"
+	default 7
+	range 1 64
+
+config EXAMPLES_ENCODER_READ_WORD
+	hex "Encoder read command word"
+	default 0x3fff
+
+config EXAMPLES_ENCODER_CPR
+	int "Encoder counts per revolution"
+	default 16384
+	range 1 65535
+
+config EXAMPLES_ENCODER_SPI_MODE
+	int "Encoder SPI mode"
+	default 1
+	range 0 3
+
+config EXAMPLES_ENCODER_SPI_NBITS
+	int "Encoder SPI word size"
+	default 16
+	range 4 32
+
+config EXAMPLES_ENCODER_SPI_FREQ
+	int "Encoder SPI frequency (Hz)"
+	default 1000000
+	range 1000 25000000
+
+endif # EXAMPLES_ENCODER
+

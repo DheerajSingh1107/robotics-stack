@@ -1,0 +1,10 @@
+############################################################################
+# apps/examples/encoder/Make.defs
+#
+# SPDX-License-Identifier: Apache-2.0
+############################################################################
+
+ifneq ($(CONFIG_EXAMPLES_ENCODER),)
+CONFIGURED_APPS += $(APPDIR)/examples/encoder
+endif
+

@@ -1,0 +1,45 @@
+config EXAMPLES_ACTUATOR
+	tristate "Actuonix L12-P actuator loop"
+	default n
+	depends on PWM && ADC
+	---help---
+		Drives an Actuonix L12-P (via Ext-R board) in a continuous
+		extend/retract loop while printing position and current feedback.
+
+		Requires:
+		  CONFIG_STM32_TIM3_PWM=y  → /dev/pwm1 (PA6, TIM3 CH1)
+		  CONFIG_STM32_ADC1=y      → /dev/adc0  (PA0=F1, PC0=F2)
+
+if EXAMPLES_ACTUATOR
+
+config EXAMPLES_ACTUATOR_PROGNAME
+	string "Program name"
+	default "actuator"
+
+config EXAMPLES_ACTUATOR_PRIORITY
+	int "Task priority"
+	default 100
+
+config EXAMPLES_ACTUATOR_STACKSIZE
+	int "Stack size"
+	default DEFAULT_TASK_STACKSIZE
+
+config EXAMPLES_ACTUATOR_PWM_DEVPATH
+	string "PWM device path"
+	default "/dev/pwm1"
+
+config EXAMPLES_ACTUATOR_ADC_DEVPATH
+	string "ADC device path"
+	default "/dev/adc0"
+
+config EXAMPLES_ACTUATOR_SWEEP_STEPS
+	int "Steps per extend/retract sweep"
+	default 50
+	range 1 500
+
+config EXAMPLES_ACTUATOR_STEP_MS
+	int "Delay between steps (ms)"
+	default 40
+	range 10 5000
+
+endif # EXAMPLES_ACTUATOR

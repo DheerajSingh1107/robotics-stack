@@ -1,0 +1,3 @@
+ifneq ($(CONFIG_EXAMPLES_ACTUATOR),)
+CONFIGURED_APPS += $(APPDIR)/examples/actuator
+endif

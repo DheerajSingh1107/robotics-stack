@@ -1,0 +1,3 @@
+ifneq ($(CONFIG_EXAMPLES_MOTORCTL),)
+CONFIGURED_APPS += $(APPDIR)/examples/motorctl
+endif
